@@ -43,11 +43,13 @@ public class RocksDBBlobStoreHandlerMultiDBs extends BlobStoreStorageHandler {
         options = new Options();
         options.setMemTableConfig(new SkipListMemTableConfig());
         BlockBasedTableConfig tableOptions = new BlockBasedTableConfig();
-        tableOptions.setBlockSize(4096)
+        tableOptions.setBlockSize(1024)
                 .setBlockCacheSize(100000000)
-                .setCacheNumShardBits(-1);//-1
+                .setCacheNumShardBits(-1)
+                .setFilter(new BloomFilter());
+
         options.setTableFormatConfig(tableOptions);
-        options.setWriteBufferSize(250000000);
+        options.setWriteBufferSize(512 * SizeUnit.MB);
         options.setMaxWriteBufferNumber(5);
         options.setMinWriteBufferNumberToMerge(2);
         options.setMaxBackgroundCompactions(1);
@@ -55,22 +57,29 @@ public class RocksDBBlobStoreHandlerMultiDBs extends BlobStoreStorageHandler {
         options.getEnv().setBackgroundThreads(8, RocksEnv.COMPACTION_POOL);
         options.getEnv().setBackgroundThreads(8, RocksEnv.FLUSH_POOL);
         options.setMaxWriteBufferNumber(8);
-        options.setMaxOpenFiles(500000);
+        options.setIncreaseParallelism(8);
+        options.setWriteBufferSize(8 * SizeUnit.KB);
+        options.setOptimizeFiltersForHits(true);
+        options.prepareForBulkLoad();
+
+
+
+//        options.setMaxOpenFiles(500000);
         //options.setDisableDataSync(false);//good for initial load
 
-        options.setTableCacheNumshardbits(6);
+//        options.setTableCacheNumshardbits(6);
 //        options.setAllowMmapReads(false);
 //        options.setAllowMmapWrites(false);
-//        options.setBloomLocality(2);
-//        options.setMemtablePrefixBloomBits(10);
+        options.setBloomLocality(2);
+        options.setMemtablePrefixBloomBits(10);
         options.setNumLevels(6);
-        options.setTargetFileSizeBase(67108864);
-        options.setTargetFileSizeMultiplier(1);
-        options.setMaxBytesForLevelBase(536870912);
-        options.setMaxBytesForLevelMultiplier(10);
-        options.setLevelZeroStopWritesTrigger(12);
-        options.setLevelZeroSlowdownWritesTrigger(8);
-        options.setLevelZeroFileNumCompactionTrigger(4);
+//        options.setTargetFileSizeBase(67108864);
+//        options.setTargetFileSizeMultiplier(1);
+//        options.setMaxBytesForLevelBase(536870912);
+//        options.setMaxBytesForLevelMultiplier(10);
+//        options.setLevelZeroStopWritesTrigger(12);
+//        options.setLevelZeroSlowdownWritesTrigger(8);
+//        options.setLevelZeroFileNumCompactionTrigger(4);
 //        options.setSoftRateLimit(0.0);
 //        options.setHardRateLimit(1000);
 //        options.setRateLimitDelayMaxMilliseconds(1000);
@@ -81,6 +90,7 @@ public class RocksDBBlobStoreHandlerMultiDBs extends BlobStoreStorageHandler {
 //        options.setMaxSuccessiveMerges(0);
 //        options.setWalTtlSeconds(0);
 //        options.setWalSizeLimitMB(0);
+
 
         options.setCompressionType(CompressionType.SNAPPY_COMPRESSION);
         options.setCompactionStyle(CompactionStyle.UNIVERSAL);
